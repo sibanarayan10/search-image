@@ -1,0 +1,61 @@
+package com.searchimage.search_image.utility;
+
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.stereotype.Component;
+
+import java.security.Key;
+import java.time.Instant;
+import java.util.Date;
+
+@Component
+public class JWTUtility {
+
+    private final Key key;
+    private final long expiration;
+
+    public JWTUtility() {
+       key = Keys.hmacShaKeyFor(
+                System.getenv("JWT_SECRET").getBytes()
+        );
+        expiration = Long.parseLong(
+                System.getenv("JWT_EXPIRATION")
+        );
+    }
+
+    // Generate token
+    public String generateToken(String username) {
+        Instant now = Instant.now();
+
+        return Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(Date.from(now))
+                .setExpiration(Date.from(now.plusMillis(expiration)))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    // Extract username
+    public String getUserName(String token) {
+        return parseToken(token)
+                .getBody()
+                .getSubject();
+    }
+
+    // Validate token
+    public boolean isTokenValid(String token) {
+        try {
+            parseToken(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    private Jws<Claims> parseToken(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token);
+    }
+}
