@@ -15,17 +15,30 @@ public class Like extends BaseEntity {
     @Column(nullable = false)
     private Long imgId;
 
-    @Column(nullable = false)
-    private Instant likedOn;
+    @Column(nullable = false,updatable = false)
+    private Instant createdOn;
 
     @Column(nullable = false)
     private boolean isActive;
 
+    @Column
+    private Instant updatedOn;
+
+
+
     @PrePersist
     private void onCreate(){
-        this.likedOn=Instant.now();
+        this.createdOn=Instant.now();
         this.isActive=true;
     }
+    @PreUpdate
+    private void onUpdate() {
+        this.updatedOn = Instant.now();
+    }
+
+
+
+
     public boolean isActive() {
         return isActive;
     }
@@ -52,11 +65,14 @@ public class Like extends BaseEntity {
         this.imgId = imgId;
     }
 
-    public Instant getLikedOn() {
-        return likedOn;
+    public Instant getUpdatedOn() {
+        return updatedOn;
     }
 
-    public void setLikedOn(Instant likedOn) {
-        this.likedOn = likedOn;
+
+    public Instant getCreatedOn() {
+        return createdOn;
     }
+
+
 }
