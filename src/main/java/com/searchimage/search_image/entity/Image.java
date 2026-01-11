@@ -1,7 +1,9 @@
 package com.searchimage.search_image.entity;
 
+import com.searchimage.search_image.entity.enums.AiStatus;
 import com.searchimage.search_image.entity.enums.RecordStatus;
 import jakarta.persistence.*;
+
 import java.time.Instant;
 import java.util.List;
 
@@ -15,14 +17,25 @@ public class Image extends BaseEntity {
     @Column(nullable = false)
     private String imgUrl;
 
+    /* ---------- USER REFERENCE (HYBRID MODEL) ---------- */
+
+    // Stores only the ID (used in writes, Kafka, security)
+    @Column(name = "uploaded_by", nullable = false)
+    private Long uploadedBy;
+
+    // Optional JPA relationship (used only when needed)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "uploaded_by",
+            insertable = false,
+            updatable = false
+    )
+    private User user;
+
+    /* ---------- METADATA ---------- */
+
     @Column(nullable = false, updatable = false)
-    private Instant uploadedOn;
-
-    @Column(nullable = false, length = 100)
-    private String uploadedBy;
-
-    @Column(nullable = false)
-    private Long uploadedId;
+    private Instant createdOn;
 
     @Column(length = 500)
     private String description;
@@ -39,19 +52,33 @@ public class Image extends BaseEntity {
     @Column(nullable = false)
     private RecordStatus recordStatus;
 
-    /* ---------- JPA lifecycle callbacks ---------- */
 
-@PrePersist
-private void onCreate(){
-    this.uploadedOn=Instant.now();
-    if(this.recordStatus==null){
-        this.recordStatus=RecordStatus.ACTIVE;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AiStatus aiRecordStatus;
+
+
+
+
+    /* ---------- JPA lifecycle ---------- */
+
+    @PrePersist
+    private void onCreate() {
+        this.createdOn = Instant.now();
+        if (this.recordStatus == null) {
+            this.recordStatus = RecordStatus.ACTIVE;
+            this.aiRecordStatus=AiStatus.PENDING;
+        }
     }
 
-}
-
     /* ---------- Getters & Setters ---------- */
+    public AiStatus getAiRecordStatus() {
+        return aiRecordStatus;
+    }
 
+    public void setAiRecordStatus(AiStatus aiRecordStatus) {
+        this.aiRecordStatus = aiRecordStatus;
+    }
     public String getName() {
         return name;
     }
@@ -68,26 +95,20 @@ private void onCreate(){
         this.imgUrl = imgUrl;
     }
 
-    public Instant getUploadedOn() {
-        return uploadedOn;
-    }
-    public void setUploadedOn() {
-        this.uploadedOn = Instant.now();
-    }
-    public String getUploadedBy() {
+    public Long getUploadedBy() {
         return uploadedBy;
     }
 
-    public void setUploadedBy(String uploadedBy) {
+    public void setUploadedBy(Long uploadedBy) {
         this.uploadedBy = uploadedBy;
     }
 
-    public Long getUploadedId() {
-        return uploadedId;
+    public User getUser() {
+        return user;
     }
 
-    public void setUploadedId(Long uploadedId) {
-        this.uploadedId = uploadedId;
+    public Instant getCreatedOn() {
+        return createdOn;
     }
 
     public String getDescription() {
@@ -104,5 +125,13 @@ private void onCreate(){
 
     public void setTags(List<String> tags) {
         this.tags = tags;
+    }
+
+    public RecordStatus getRecordStatus() {
+        return recordStatus;
+    }
+
+    public void setRecordStatus(RecordStatus recordStatus) {
+        this.recordStatus = recordStatus;
     }
 }

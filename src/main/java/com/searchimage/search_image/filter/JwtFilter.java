@@ -8,12 +8,16 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
@@ -35,6 +39,8 @@ public class JwtFilter extends OncePerRequestFilter {
         String token=extractTokenFromCookie(request);
 
             if (token!=null&&jwtUtil.isTokenValid(token)) {
+                List<GrantedAuthority> authorities =
+                        List.of(new SimpleGrantedAuthority("ROLE_USER"));
                 String email = jwtUtil.getEmail(token);
                 Long userId=jwtUtil.getUserId(token);
                 UserPrincipal up=new UserPrincipal(email,userId);
@@ -42,7 +48,7 @@ public class JwtFilter extends OncePerRequestFilter {
                         new UsernamePasswordAuthenticationToken(
                                 up,
                                 null,
-                                Collections.emptyList()
+                                authorities
                         );
 
                 authentication.setDetails(
@@ -51,8 +57,36 @@ public class JwtFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.getContext()
                         .setAuthentication(authentication);
+
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                System.out.println("AUTH OBJECT = " + auth);
+                System.out.println("IS AUTHENTICATED = " + auth.isAuthenticated());
+                System.out.println("AUTHORITIES = " + auth.getAuthorities());
+                System.out.println("PRINCIPAL CLASS = " + auth.getPrincipal().getClass());
             }
 
+            //just for now need to edited later
+            else{
+                List<GrantedAuthority> authorities =
+                        List.of(new SimpleGrantedAuthority("ROLE_CHECK"));
+                String email = "sibanarayan0@gmail.com";
+                Long userId=1L;
+                UserPrincipal v=new UserPrincipal(email,userId);
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                v,
+                                null,
+                                authorities
+                        );
+
+                authentication.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
+                );
+
+                SecurityContextHolder.getContext()
+                        .setAuthentication(authentication);
+
+            }
         filterChain.doFilter(request, response);
     }
 

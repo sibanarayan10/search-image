@@ -3,13 +3,13 @@ package com.searchimage.search_image.controller;
 import com.searchimage.search_image.service.LikeService;
 import com.searchimage.search_image.service.UserService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@CrossOrigin("*")
+@CrossOrigin(origins = "https://localhost:5173")
+
+@RequestMapping("/api/v1")
+
 public class LikeController {
     private final LikeService likeService;
     public LikeController(LikeService likeService){

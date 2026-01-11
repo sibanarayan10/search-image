@@ -14,12 +14,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.apache.coyote.Response;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@CrossOrigin("*")
+@CrossOrigin(origins = "http://localhost:5173",allowCredentials = "true")
+@RequestMapping("/api/v1/")
 public class UserController {
     private final UserService userService;
     private final UserRepository userRepository;
@@ -38,12 +41,12 @@ public class UserController {
         this.jwtFilter=jwtFilter;
     }
 
-    @PostMapping("api/auth/register")
+    @PostMapping("auth/user/sign-up")
     private ResponseEntity<?> register(@RequestBody UserDto userRequest){
         userService.registerUser(userRequest);
         return ResponseEntity.status(201).body("User registered successfully");
     }
-    @PostMapping("api/auth/login")
+    @PostMapping("auth/user/sign-in")
     public ResponseEntity<LoginResponseDto> login(
             @RequestBody LoginRequestDto request,
             HttpServletResponse response
@@ -59,19 +62,22 @@ public class UserController {
                     .body(new LoginResponseDto("Invalid credentials"));
         }
         String token = jwtUtil.generateToken(user.getEmail(),user.getId());
-        Cookie cookie = new Cookie("AUTH_TOKEN", token);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(60 * 60);
-        response.addCookie(cookie);
+        ResponseCookie cookie = ResponseCookie.from("AUTH_TOKEN", token)
+                .httpOnly(true)
+                .secure(false)          // true only in HTTPS
+                .sameSite("None")       // REQUIRED for cross-origin XHR
+                .path("/")
+                .maxAge(60 * 60)
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         return ResponseEntity.ok(
                 new LoginResponseDto("Login successful")
         );
     }
 
 
-    @PostMapping("api/user/log-out")
+    @PostMapping("user/log-out")
     public ResponseEntity<Boolean>logout(HttpServletRequest request,HttpServletResponse response){
 
         Cookie cookie = new Cookie("AUTH_TOKEN", null);
@@ -85,7 +91,7 @@ public class UserController {
         return ResponseEntity.ok(true);
     }
 
-    @PutMapping("api/user/delete")
+    @PutMapping("user/delete")
     public ResponseEntity<Boolean>deleteUser(HttpServletRequest request){
         String token=jwtFilter.extractTokenFromCookie(request);
         if(token!=null){
@@ -100,10 +106,10 @@ public class UserController {
         }
         return ResponseEntity.ok(false);
     }
+//    @GetMapping("user/details")
+//    public ResponseEntity<UserDto> getUserDetail(){
+//        User
+//    }
 
-    //    @GetMapping("api/users/:userId/details")
-//    public ResponseEntity<UserDto> getUserDetail(@PathVariable Long userId){
-//        User u= userService.findUserById(userId);
-//
-//        };
+
 }

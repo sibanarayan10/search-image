@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.List;
 
 @Entity
 @Table(
@@ -34,6 +35,9 @@ public class User extends BaseEntity implements Serializable {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private RecordStatus recordStatus;
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Like> likes;
 
     /* ---------- JPA lifecycle callbacks ---------- */
 
