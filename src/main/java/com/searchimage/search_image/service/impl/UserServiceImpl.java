@@ -1,12 +1,16 @@
 package com.searchimage.search_image.service.impl;
+import com.searchimage.search_image.dto.UserDetailResponseDto;
 import com.searchimage.search_image.dto.UserDto;
 import com.searchimage.search_image.entity.User;
 import com.searchimage.search_image.entity.enums.RecordStatus;
 import com.searchimage.search_image.exception.UserAlreadyExistsException;
+import com.searchimage.search_image.repository.FollowRepository;
 import com.searchimage.search_image.repository.UserRepository;
+import com.searchimage.search_image.security.UserPrincipal;
 import com.searchimage.search_image.service.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,13 +22,15 @@ public class UserServiceImpl implements UserService {
     private final ModelMapper modelMapper;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final  FollowRepository followRepository;
 
     @Autowired
     public UserServiceImpl(ModelMapper modelMapper, UserRepository userRepository,
-                           PasswordEncoder passwordEncoder) {
+                           PasswordEncoder passwordEncoder,FollowRepository followRepository) {
         this.modelMapper = modelMapper;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.followRepository=followRepository;
 
     }
 
@@ -81,5 +87,30 @@ public class UserServiceImpl implements UserService {
         u.setRecordStatus(RecordStatus.DELETED);
         return true;
 
+    }
+
+    @Override
+    public UserDetailResponseDto getUserDetail() {
+       UserPrincipal currUser=getCurrentUser();
+       Long userId=currUser.getUserId();
+       User u=userRepository.findById(userId).orElseThrow(()->new RuntimeException("User not found"));
+       Long followerCount=followRepository.countByFollowingIdAndIsActiveTrue(userId);
+       Long followingCount= followRepository.countByFollowedByIdAndIsActiveTrue(userId);
+       UserDetailResponseDto dto=new UserDetailResponseDto();
+       dto.setName(u.getName());
+       dto.setEmail(u.getEmail());
+       dto.setFollowerCount(followerCount);
+       dto.setFollowingCount(followingCount);
+       dto.setImgUrl(u.getImgUrl());
+       return dto;
+
+
+
+    }
+    private UserPrincipal getCurrentUser(){
+        return (UserPrincipal) SecurityContextHolder
+                                .getContext()
+                                .getAuthentication()
+                                .getPrincipal();
     }
 }

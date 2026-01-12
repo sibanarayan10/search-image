@@ -2,6 +2,7 @@ package com.searchimage.search_image.controller;
 
 import com.searchimage.search_image.dto.LoginRequestDto;
 import com.searchimage.search_image.dto.LoginResponseDto;
+import com.searchimage.search_image.dto.UserDetailResponseDto;
 import com.searchimage.search_image.dto.UserDto;
 import com.searchimage.search_image.entity.User;
 import com.searchimage.search_image.filter.JwtFilter;
@@ -11,7 +12,6 @@ import com.searchimage.search_image.utility.JWTUtility;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.apache.coyote.Response;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -106,10 +106,13 @@ public class UserController {
         }
         return ResponseEntity.ok(false);
     }
-//    @GetMapping("user/details")
-//    public ResponseEntity<UserDto> getUserDetail(){
-//        User
-//    }
+
+    @GetMapping("user/details")
+    public ResponseEntity<UserDetailResponseDto> getUserDetail(){
+        UserDetailResponseDto response=userService.getUserDetail();
+        return ResponseEntity.ok(response);
+
+    }
 
 
 }

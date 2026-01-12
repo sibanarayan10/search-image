@@ -3,7 +3,6 @@ package com.searchimage.search_image.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.searchimage.search_image.dto.ImageResponse;
 import com.searchimage.search_image.dto.ImageUploadRequest;
-import com.searchimage.search_image.entity.Image;
 import com.searchimage.search_image.service.ImageService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.MediaType;
@@ -28,14 +27,6 @@ public class ImageController {
     }
 
     // -------- Upload single image --------
-//    @PostMapping("/upload")
-//    public ResponseEntity<ImageResponse> uploadImage(
-//            @RequestParam("file") MultipartFile file
-//    ) {
-//        Image image = imageService.uploadImage(file);
-//        return ResponseEntity.status(HttpStatus.CREATED)
-//                .body(ImageResponse.from(image));
-//    }
 
     // -------- Upload multiple images --------
     @PostMapping(
@@ -83,7 +74,7 @@ public class ImageController {
     }
 
     // -------- Delete image --------
-    @DeleteMapping("/{imageId}")
+    @DeleteMapping("images/{imageId}")
     public ResponseEntity<Void> deleteImage(
             @PathVariable Long imageId
     ) {

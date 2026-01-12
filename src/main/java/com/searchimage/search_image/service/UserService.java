@@ -1,5 +1,6 @@
 package com.searchimage.search_image.service;
 
+import com.searchimage.search_image.dto.UserDetailResponseDto;
 import com.searchimage.search_image.dto.UserDto;
 import com.searchimage.search_image.entity.User;
 
@@ -21,6 +22,8 @@ public interface UserService {
     void saveUserWithUpdatedPassword(User userEntity);
 
     void registerUser(UserDto userDto);
+
+    UserDetailResponseDto getUserDetail();
 
 
 }

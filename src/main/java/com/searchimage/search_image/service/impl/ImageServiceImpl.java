@@ -130,10 +130,10 @@ public class ImageServiceImpl implements ImageService {
         Long userId=u.getUserId();
         List<Image>images;
         if(isUserSpecific){
-            images=imageRepository.findByUploadedByAndRecordStatus(userId, RecordStatus.ACTIVE.toString());
+            images=imageRepository.findByUploadedByAndRecordStatus(userId, RecordStatus.ACTIVE);
 
         }else{
-            images=imageRepository.findAllByRecordStatus(RecordStatus.ACTIVE.toString());
+            images=imageRepository.findAllByRecordStatus(RecordStatus.ACTIVE);
 
         }
         List<Long> imageIds = images.stream()
