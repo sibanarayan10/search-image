@@ -35,28 +35,28 @@ public class ImageController {
     )
     public ResponseEntity<?> uploadImages(
             @RequestParam("images") List<MultipartFile> images,
-            HttpServletRequest request
-    ) {
+            @RequestPart("metadata") String metadataJson
+    ) throws Exception {
 
-        if (images == null || images.isEmpty()) {
-            return ResponseEntity.badRequest().body("No images provided");
+        ObjectMapper mapper = new ObjectMapper();
+
+        List<ImageUploadRequest> metadata =
+                mapper.readValue(
+                        metadataJson,
+                        new TypeReference<List<ImageUploadRequest>>() {}
+                );
+
+        if (images.size() != metadata.size()) {
+            throw new IllegalArgumentException("Images & metadata mismatch");
         }
-
         List<ImageUploadRequest> uploadRequests = new ArrayList<>();
 
         for (int i = 0; i < images.size(); i++) {
+            metadata.get(i).setFile(images.get(i));
 
-            String title = request.getParameter("metadata[" + i + "][title]");
-            String desc  = request.getParameter("metadata[" + i + "][desc]");
-            String tags  = request.getParameter("metadata[" + i + "][tags]");
 
-            ImageUploadRequest dto = new ImageUploadRequest();
-            dto.setFile(images.get(i));
-            dto.setTitle(title);
-            dto.setDescription(desc);
-            dto.setTags(parseTags(tags));
 
-            uploadRequests.add(dto);
+            uploadRequests.add( metadata.get(i));
         }
 
         imageService.uploadImages(uploadRequests);
