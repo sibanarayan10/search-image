@@ -5,6 +5,7 @@ import com.searchimage.search_image.dto.ImageResponse;
 import com.searchimage.search_image.dto.ImageUploadRequest;
 import com.searchimage.search_image.service.ImageService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -63,6 +64,8 @@ public class ImageController {
 
         return ResponseEntity.ok("Images uploaded successfully");
     }
+
+
     private List<String> parseTags(String tagsJson) {
         if (tagsJson == null) return List.of();
         try {
@@ -86,6 +89,16 @@ public class ImageController {
     public ResponseEntity<List<ImageResponse>> getImages(@RequestParam boolean isUserSpecific, @RequestParam boolean isSaved){
             List<ImageResponse>images=imageService.getImages(isUserSpecific,isSaved);
             return ResponseEntity.ok(images);
+    }
+    @GetMapping("/search")
+    public ResponseEntity<Page<ImageResponse>> searchImages(
+            @RequestParam("q") String query,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return ResponseEntity.ok(
+                imageService.searchImages(query, page, size)
+        );
     }
 }
 

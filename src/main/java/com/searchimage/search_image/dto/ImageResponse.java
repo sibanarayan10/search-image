@@ -1,19 +1,40 @@
 package com.searchimage.search_image.dto;
 
 import com.searchimage.search_image.entity.Image;
+import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.List;
 
 
+@Component
     public class ImageResponse {
         private Long imageId;
         private String imageUrl;
+        private String name;
+        private String description;
         private String uploadedBy;
         private Instant uploadedOn;
         private long totalLikes;
         private boolean likedByCurrentUser;
 
+public ImageResponse(){
+
+}
+    public ImageResponse(
+            Long id,
+            String name,
+            String imgUrl,
+            String description,
+
+            Instant createdOn
+    ) {
+        this.imageId = id;
+        this.name = name;
+        this.imageUrl = imgUrl;
+        this.description = description;
+        this.uploadedOn = createdOn;
+    }
         public Long getImageId() {
             return imageId;
         }

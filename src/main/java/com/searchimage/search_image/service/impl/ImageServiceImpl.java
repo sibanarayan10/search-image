@@ -12,6 +12,7 @@ import com.searchimage.search_image.repository.ImageRepository;
 import com.searchimage.search_image.repository.LikeRepository;
 import com.searchimage.search_image.security.UserPrincipal;
 import com.searchimage.search_image.service.ImageService;
+import org.springframework.data.domain.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -176,5 +177,58 @@ public class ImageServiceImpl implements ImageService {
 
         return response;
     }
+    public Page<ImageResponse> searchImages(
+            String query,
+            int page,
+            int size
+    ) {
+
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Image> images=imageRepository
+                .searchImages(query, pageable);
+        return imageRepository
+                .searchImages(query, pageable)
+                .map(this::toResponse);
+
+    }
+
+    /* ---------- Ranking Algorithm ---------- */
+    private double score(Image image, String q) {
+        String query = q.toLowerCase();
+        double score = 0;
+
+        if (image.getName() != null &&
+                image.getName().toLowerCase().contains(query)) {
+            score += 3;
+        }
+
+        if (image.getDescription() != null &&
+                image.getDescription().toLowerCase().contains(query)) {
+            score += 2;
+        }
+
+        if (image.getTags() != null) {
+            for (String tag : image.getTags()) {
+                if (tag.toLowerCase().contains(query)) {
+                    score += 4;
+                }
+            }
+        }
+
+        return score;
+    }
+
+    private ImageResponse toResponse(Image image) {
+        return new ImageResponse(
+                image.getId(),
+                image.getName(),
+              image.getImgUrl(),
+                image.getDescription(),
+                image.getCreatedOn()
+
+                );
+    }
+
 }
 
