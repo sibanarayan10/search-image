@@ -1,32 +1,31 @@
 package com.searchimage.search_image.dto;
 
-import com.searchimage.search_image.entity.Image;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.List;
 
 
-@Component
-    public class ImageResponse {
-        private Long imageId;
-        private String imageUrl;
-        private String name;
-        private String description;
-        private String uploadedBy;
-        private Instant uploadedOn;
-        private long totalLikes;
-        private boolean likedByCurrentUser;
+public class ImageResponse {
+    private Long imageId;
+    private String imageUrl;
+    private String name;
+    private String description;
+    private Long uploadedBy;
+    private Instant uploadedOn;
+    private Long totalLikes;
+    private boolean likedByCurrentUser;
 
-public ImageResponse(){
+    public ImageResponse() {
 
-}
+    }
+
     public ImageResponse(
             Long id,
             String name,
             String imgUrl,
             String description,
-
+            Long totalLikes,
+            boolean likedByCurrentUser,
             Instant createdOn
     ) {
         this.imageId = id;
@@ -34,53 +33,76 @@ public ImageResponse(){
         this.imageUrl = imgUrl;
         this.description = description;
         this.uploadedOn = createdOn;
+        this.totalLikes = totalLikes;
+        this.likedByCurrentUser = likedByCurrentUser;
     }
-        public Long getImageId() {
-            return imageId;
-        }
 
-        public void setImageId(Long imageId) {
-            this.imageId = imageId;
-        }
-
-        public String getImageUrl() {
-            return imageUrl;
-        }
-
-        public void setImageUrl(String imageUrl) {
-            this.imageUrl = imageUrl;
-        }
-
-        public String getUploadedBy() {
-            return uploadedBy;
-        }
-
-        public void setUploadedBy(String uploadedBy) {
-            this.uploadedBy = uploadedBy;
-        }
-
-        public Instant getUploadedOn() {
-            return uploadedOn;
-        }
-
-        public void setUploadedOn(Instant uploadedOn) {
-            this.uploadedOn = uploadedOn;
-        }
-
-        public long getTotalLikes() {
-            return totalLikes;
-        }
-
-        public void setTotalLikes(long totalLikes) {
-            this.totalLikes = totalLikes;
-        }
-
-        public boolean isLikedByCurrentUser() {
-            return likedByCurrentUser;
-        }
-
-        public void setLikedByCurrentUser(boolean likedByCurrentUser) {
-            this.likedByCurrentUser = likedByCurrentUser;
-        }
+    public String getName() {
+        return name;
     }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Long getImageId() {
+        return imageId;
+    }
+
+    public void setImageId(Long imageId) {
+        this.imageId = imageId;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
+    public Long getUploadedBy() {
+        return uploadedBy;
+    }
+
+    public void setUploadedBy(Long uploadedBy) {
+        this.uploadedBy = uploadedBy;
+    }
+
+    public Instant getUploadedOn() {
+        return uploadedOn;
+    }
+
+    public void setUploadedOn(Instant uploadedOn) {
+        this.uploadedOn = uploadedOn;
+    }
+
+    public long getTotalLikes() {
+        return totalLikes;
+    }
+
+    public void setTotalLikes(Long totalLikes) {
+        this.totalLikes = totalLikes;
+    }
+
+    public void setTotalLikes(long totalLikes) {
+        this.totalLikes = totalLikes;
+    }
+
+    public boolean isLikedByCurrentUser() {
+        return likedByCurrentUser;
+    }
+
+    public void setLikedByCurrentUser(boolean likedByCurrentUser) {
+        this.likedByCurrentUser = likedByCurrentUser;
+    }
+}
 

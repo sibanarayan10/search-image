@@ -3,6 +3,7 @@ package com.searchimage.search_image.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.searchimage.search_image.dto.ImageResponse;
 import com.searchimage.search_image.dto.ImageUploadRequest;
+import com.searchimage.search_image.dto.PageResponse;
 import com.searchimage.search_image.service.ImageService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
@@ -16,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
 @CrossOrigin(origins = "http://localhost:5173",
         allowCredentials = "true")
 public class ImageController {
@@ -85,19 +86,20 @@ public class ImageController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("images")
-    public ResponseEntity<List<ImageResponse>> getImages(@RequestParam boolean isUserSpecific, @RequestParam boolean isSaved){
-            List<ImageResponse>images=imageService.getImages(isUserSpecific,isSaved);
-            return ResponseEntity.ok(images);
-    }
-    @GetMapping("/search")
-    public ResponseEntity<Page<ImageResponse>> searchImages(
-            @RequestParam("q") String query,
+//    @GetMapping("images")
+//    public ResponseEntity<List<ImageResponse>> getImages(@RequestParam boolean isUserSpecific, @RequestParam boolean isSaved){
+//            List<ImageResponse>images=imageService.getImages(isUserSpecific,isSaved);
+//            return ResponseEntity.ok(images);
+//    }
+@GetMapping(value = "images", produces = MediaType.APPLICATION_JSON_VALUE)
+public ResponseEntity<PageResponse<ImageResponse>> searchImages(
+            @RequestParam(value = "q",defaultValue = "") String query,
+            @RequestParam("userSpecific") boolean userSpecific,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
         return ResponseEntity.ok(
-                imageService.searchImages(query, page, size)
+                imageService.searchImages(query,userSpecific, page, size)
         );
     }
 }

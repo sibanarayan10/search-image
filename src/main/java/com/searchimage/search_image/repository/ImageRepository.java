@@ -1,5 +1,8 @@
 package com.searchimage.search_image.repository;
 
+import com.searchimage.search_image.dto.ImageProjection;
+import com.searchimage.search_image.dto.ImageResponse;
+import com.searchimage.search_image.dto.PageResponse;
 import com.searchimage.search_image.entity.Image;
 import com.searchimage.search_image.entity.enums.RecordStatus;
 import org.springframework.data.domain.Page;
@@ -23,22 +26,69 @@ public interface ImageRepository extends JpaRepository<Image,Long> {
     );
     @Query(
             value = """
-        SELECT *
-        FROM images
-        WHERE record_status = 'ACTIVE'
-        AND search_vector @@ plainto_tsquery(:q)
-        ORDER BY ts_rank(search_vector, plainto_tsquery(:q)) DESC
-        """,
+                    SELECT  i.id,
+                        i.name,
+                        i.img_url,
+                        i.description,
+                        i.uploaded_by,
+                        i.created_on,
+
+                        COUNT(l.id) AS total_likes,
+
+                        CASE 
+                            WHEN SUM(
+                                CASE 
+                                    WHEN :userId IS NOT NULL
+                                     AND l.user_id = :userId 
+                                     AND l.is_active = true
+                                    THEN 1 ELSE 0 
+                                END
+                            ) > 0 
+                            THEN true 
+                            ELSE false 
+                        END AS liked_by_me
+
+                    FROM images i
+
+                    LEFT JOIN likes l 
+                        ON l.img_id = i.id 
+                       AND l.is_active = true
+
+                    WHERE i.record_status = 'ACTIVE'
+                      AND (
+                              :q IS NULL
+                           OR :q = ''
+                           OR i.search_vector @@ plainto_tsquery(:q)
+                      )
+                      AND ( :userSpecific IS FALSE OR i.uploaded_by = :userId )
+
+                    GROUP BY i.id
+
+                                        ORDER BY
+                                            (CASE
+                                                WHEN :q IS NULL OR :q = '' THEN 0
+                                                ELSE ts_rank(i.search_vector, plainto_tsquery(:q))
+                                             END) DESC,
+                                            i.created_on DESC
+                    """,
+
             countQuery = """
-        SELECT COUNT(*)
-        FROM images
-        WHERE record_status = 'ACTIVE'
-        AND search_vector @@ plainto_tsquery(:q)
-        """,
+                    SELECT COUNT(DISTINCT i.id)
+                    FROM images i
+                    WHERE i.record_status = 'ACTIVE'
+                      AND (     :q IS NULL OR
+                                :q = '' OR i.search_vector @@ plainto_tsquery(:q) )
+                      AND ( :userSpecific IS FALSE OR i.uploaded_by = :userId )
+                    """,
+
             nativeQuery = true
     )
-    Page<Image> searchImages(
+    Page<ImageProjection> searchImages(
             @Param("q") String query,
+            @Param("userId") Long userId,
+            @Param("userSpecific") boolean userSpecific,
             Pageable pageable
     );
+
+
 }

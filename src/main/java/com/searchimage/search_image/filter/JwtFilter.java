@@ -65,28 +65,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 System.out.println("PRINCIPAL CLASS = " + auth.getPrincipal().getClass());
             }
 
-            //just for now need to edited later
-            else{
-                List<GrantedAuthority> authorities =
-                        List.of(new SimpleGrantedAuthority("ROLE_CHECK"));
-                String email = "sibanarayan0@gmail.com";
-                Long userId=1L;
-                UserPrincipal v=new UserPrincipal(email,userId);
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                v,
-                                null,
-                                authorities
-                        );
 
-                authentication.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
-
-                SecurityContextHolder.getContext()
-                        .setAuthentication(authentication);
-
-            }
         filterChain.doFilter(request, response);
     }
 

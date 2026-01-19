@@ -1,8 +1,10 @@
 package com.searchimage.search_image.service.impl;
 
 import com.cloudinary.Cloudinary;
+import com.searchimage.search_image.dto.ImageProjection;
 import com.searchimage.search_image.dto.ImageResponse;
 import com.searchimage.search_image.dto.ImageUploadRequest;
+import com.searchimage.search_image.dto.PageResponse;
 import com.searchimage.search_image.entity.Image;
 import com.searchimage.search_image.entity.Like;
 import com.searchimage.search_image.entity.enums.RecordStatus;
@@ -89,7 +91,112 @@ public class ImageServiceImpl implements ImageService {
         imageRepository.delete(image);
     }
 
+
+
+    @Override
+//    public List<ImageResponse> getImages(boolean isUserSpecific,boolean isSaved){
+//        UserPrincipal u=getCurrentUser();
+//        Long userId=u.getUserId();
+//        List<Image>images;
+//        if(isUserSpecific){
+//            images=imageRepository.findByUploadedByAndRecordStatus(userId, RecordStatus.ACTIVE);
+//
+//        }else{
+//            images=imageRepository.findAllByRecordStatus(RecordStatus.ACTIVE);
+//
+//        }
+//        List<Long> imageIds = images.stream()
+//                .map(Image::getId)
+//                .toList();
+//
+//        Map<Long, Long> likeCountMap = new HashMap<>();
+//
+//        for (Object[] row : likeRepository.countLikesByImageIds(imageIds)) {
+//            Long imgId = (Long) row[0];
+//            Long count = (Long) row[1];
+//            likeCountMap.put(imgId, count);
+//        }
+//        List<Like> userLikes =
+//                likeRepository.findByUserIdAndImgIdIn(
+//                        userId,
+//                        imageIds
+//                );
+//        Set<Long> likedImageIds = userLikes.stream()
+//                .map(Like::getImgId)
+//                .collect(Collectors.toSet());
+//        List<ImageResponse> response = new ArrayList<>();
+//
+//        for (Image image : images) {
+//            ImageResponse dto = new ImageResponse();
+//
+//            dto.setImageId(image.getId());
+//            dto.setImageUrl(image.getImgUrl());
+//            dto.setUploadedBy(image.getUser().getName());
+//            dto.setUploadedOn(image.getCreatedOn());
+//            dto.setTotalLikes(
+//                    likeCountMap.getOrDefault(image.getId(), 0L)
+//            );
+//            dto.setLikedByCurrentUser(
+//                    likedImageIds.contains(image.getId())
+//            );
+//
+//            response.add(dto);
+//        }
+//
+//        return response;
+//    }
+    public PageResponse<ImageResponse> searchImages(
+            String query,
+            boolean userSpecific,
+            int page,
+            int size
+    ) {
+
+        UserPrincipal u=getCurrentUser();
+        Long userId=u.getUserId();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ImageProjection> images=imageRepository
+                .searchImages(query,userId,userSpecific,pageable);
+
+        Page<ImageResponse> dtoPage = images.map(p -> {
+            ImageResponse dto = new ImageResponse();
+            dto.setImageId(p.getId());
+            dto.setName(p.getName());
+            dto.setImageUrl(p.getImgUrl());
+            dto.setDescription(p.getDescription());
+            dto.setUploadedBy(p.getUploadedBy());
+            dto.setUploadedOn(p.getCreatedOn());
+            dto.setTotalLikes(p.getTotalLikes());
+            dto.setLikedByCurrentUser(p.getLikedByMe());
+            return dto;
+        });
+        return new PageResponse<ImageResponse>(dtoPage);
+
+    }
+
+
+
+
+
+
+
+
     // -------- Helpers --------
+
+
+    private ImageResponse toResponse(Image image,Long totalLikes,boolean likedByUser) {
+        return new ImageResponse(
+                image.getId(),
+                image.getName(),
+              image.getImgUrl(),
+                image.getDescription(),
+                totalLikes,
+                likedByUser,
+                image.getCreatedOn()
+
+
+                );
+    }
 
     private String uploadToCloudinary(MultipartFile file) {
         try {
@@ -124,111 +231,5 @@ public class ImageServiceImpl implements ImageService {
                 .substring(imageUrl.lastIndexOf("/") + 1,
                         imageUrl.lastIndexOf("."));
     }
-
-    @Override
-    public List<ImageResponse> getImages(boolean isUserSpecific,boolean isSaved){
-        UserPrincipal u=getCurrentUser();
-        Long userId=u.getUserId();
-        List<Image>images;
-        if(isUserSpecific){
-            images=imageRepository.findByUploadedByAndRecordStatus(userId, RecordStatus.ACTIVE);
-
-        }else{
-            images=imageRepository.findAllByRecordStatus(RecordStatus.ACTIVE);
-
-        }
-        List<Long> imageIds = images.stream()
-                .map(Image::getId)
-                .toList();
-
-        Map<Long, Long> likeCountMap = new HashMap<>();
-
-        for (Object[] row : likeRepository.countLikesByImageIds(imageIds)) {
-            Long imgId = (Long) row[0];
-            Long count = (Long) row[1];
-            likeCountMap.put(imgId, count);
-        }
-        List<Like> userLikes =
-                likeRepository.findByUserIdAndImgIdIn(
-                        userId,
-                        imageIds
-                );
-        Set<Long> likedImageIds = userLikes.stream()
-                .map(Like::getImgId)
-                .collect(Collectors.toSet());
-        List<ImageResponse> response = new ArrayList<>();
-
-        for (Image image : images) {
-            ImageResponse dto = new ImageResponse();
-
-            dto.setImageId(image.getId());
-            dto.setImageUrl(image.getImgUrl());
-            dto.setUploadedBy(image.getUser().getName());
-            dto.setUploadedOn(image.getCreatedOn());
-            dto.setTotalLikes(
-                    likeCountMap.getOrDefault(image.getId(), 0L)
-            );
-            dto.setLikedByCurrentUser(
-                    likedImageIds.contains(image.getId())
-            );
-
-            response.add(dto);
-        }
-
-        return response;
-    }
-    public Page<ImageResponse> searchImages(
-            String query,
-            int page,
-            int size
-    ) {
-
-
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<Image> images=imageRepository
-                .searchImages(query, pageable);
-        return imageRepository
-                .searchImages(query, pageable)
-                .map(this::toResponse);
-
-    }
-
-    /* ---------- Ranking Algorithm ---------- */
-    private double score(Image image, String q) {
-        String query = q.toLowerCase();
-        double score = 0;
-
-        if (image.getName() != null &&
-                image.getName().toLowerCase().contains(query)) {
-            score += 3;
-        }
-
-        if (image.getDescription() != null &&
-                image.getDescription().toLowerCase().contains(query)) {
-            score += 2;
-        }
-
-        if (image.getTags() != null) {
-            for (String tag : image.getTags()) {
-                if (tag.toLowerCase().contains(query)) {
-                    score += 4;
-                }
-            }
-        }
-
-        return score;
-    }
-
-    private ImageResponse toResponse(Image image) {
-        return new ImageResponse(
-                image.getId(),
-                image.getName(),
-              image.getImgUrl(),
-                image.getDescription(),
-                image.getCreatedOn()
-
-                );
-    }
-
 }
 

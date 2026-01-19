@@ -2,6 +2,7 @@ package com.searchimage.search_image.service;
 
 import com.searchimage.search_image.dto.ImageResponse;
 import com.searchimage.search_image.dto.ImageUploadRequest;
+import com.searchimage.search_image.dto.PageResponse;
 import com.searchimage.search_image.entity.Image;
 import com.searchimage.search_image.security.UserPrincipal;
 import org.springframework.data.domain.Page;
@@ -15,9 +16,10 @@ public interface ImageService {
     void uploadImages(List<ImageUploadRequest> files);
 
     void deleteImage(Long imageId);
-    List<ImageResponse> getImages(boolean isUserSpecific, boolean isSaved);
-    Page<ImageResponse> searchImages(   String query,
-                                        int page,
-                                        int size);
+//    List<ImageResponse> getImages(boolean isUserSpecific, boolean isSaved);
+    PageResponse<ImageResponse>  searchImages(String query,
+                                             boolean userSpecific,
+                                             int page,
+                                             int size);
 }
 

@@ -65,7 +65,7 @@ public class UserController {
         ResponseCookie cookie = ResponseCookie.from("AUTH_TOKEN", token)
                 .httpOnly(true)
                 .secure(false)          // true only in HTTPS
-                .sameSite("None")       // REQUIRED for cross-origin XHR
+                .sameSite("Lax")       // REQUIRED for cross-origin XHR
                 .path("/")
                 .maxAge(60 * 60)
                 .build();
