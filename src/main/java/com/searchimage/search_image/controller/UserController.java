@@ -59,7 +59,7 @@ public class UserController {
         if (!passwordMatches) {
             return ResponseEntity
                     .status(401)
-                    .body(new LoginResponseDto("Invalid credentials"));
+                    .body(new LoginResponseDto("Invalid credentials",user));
         }
         String token = jwtUtil.generateToken(user.getEmail(),user.getId());
         ResponseCookie cookie = ResponseCookie.from("AUTH_TOKEN", token)
@@ -72,7 +72,7 @@ public class UserController {
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         return ResponseEntity.ok(
-                new LoginResponseDto("Login successful")
+                new LoginResponseDto("Login successful",user)
         );
     }
 

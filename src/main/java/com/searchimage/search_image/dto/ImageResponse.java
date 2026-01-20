@@ -15,6 +15,12 @@ public class ImageResponse {
     private Long totalLikes;
     private boolean likedByCurrentUser;
 
+
+    private boolean isFollowing;
+
+
+    private String uploadedByUserName;
+
     public ImageResponse() {
 
     }
@@ -26,7 +32,11 @@ public class ImageResponse {
             String description,
             Long totalLikes,
             boolean likedByCurrentUser,
-            Instant createdOn
+            Instant createdOn,
+            String uploadedByUserName,
+            boolean isFollowing
+
+
     ) {
         this.imageId = id;
         this.name = name;
@@ -35,8 +45,25 @@ public class ImageResponse {
         this.uploadedOn = createdOn;
         this.totalLikes = totalLikes;
         this.likedByCurrentUser = likedByCurrentUser;
+        this.uploadedByUserName=uploadedByUserName;
+        this.isFollowing=isFollowing;
     }
 
+    public boolean isFollowing() {
+        return isFollowing;
+    }
+
+    public void setFollowing(boolean following) {
+        isFollowing = following;
+    }
+
+    public String getUploadedByUserName() {
+        return uploadedByUserName;
+    }
+
+    public void setUploadedByUserName(String uploadedByUserName) {
+        this.uploadedByUserName = uploadedByUserName;
+    }
     public String getName() {
         return name;
     }

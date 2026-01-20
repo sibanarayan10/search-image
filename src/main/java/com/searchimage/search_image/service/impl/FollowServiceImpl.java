@@ -28,10 +28,13 @@ public class FollowServiceImpl implements FollowService {
     public boolean toggleFollow(Long userId) {
         UserPrincipal up = (UserPrincipal) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Long authUserId=up.getUserId();
+        if(authUserId==userId){
+            throw new RuntimeException("Followig and follower can't be same");
+        }
         User following=userRepository.findById(authUserId).orElseThrow(()->new RuntimeException("User not found"));
         User followedBy=userRepository.findById(userId).orElseThrow(()->new RuntimeException("User not found"));
 
-        Optional<Follow> existing=followRepository.findByFollowedByIdAndFollowingId(userId,authUserId);
+        Optional<Follow> existing=followRepository.findByFollowedByIdAndFollowingId(authUserId,userId);
         if(existing.isPresent()){
             Follow doc=existing.get();
             boolean isActive=doc.isActive();
@@ -39,8 +42,8 @@ public class FollowServiceImpl implements FollowService {
             followRepository.save(doc);
         }else{
             Follow f=new Follow();
-            f.setFollowing(following);
-            f.setFollowedBy(followedBy);
+            f.setFollowing(followedBy);
+            f.setFollowedBy(following);
             followRepository.save(f);
         }
         return true;

@@ -10,7 +10,9 @@ public interface ImageProjection {
     String getDescription();
     Long getUploadedBy();
     Instant getCreatedOn();
-
+    String getUploadedByUsername();
     Long getTotalLikes();
     Boolean getLikedByMe();
+    Boolean getIsFollowing();
+
 }

@@ -168,6 +168,9 @@ public class ImageServiceImpl implements ImageService {
             dto.setUploadedOn(p.getCreatedOn());
             dto.setTotalLikes(p.getTotalLikes());
             dto.setLikedByCurrentUser(p.getLikedByMe());
+            dto.setUploadedBy(p.getUploadedBy());
+            dto.setUploadedByUserName(p.getUploadedByUsername());
+            dto.setFollowing(p.getIsFollowing());
             return dto;
         });
         return new PageResponse<ImageResponse>(dtoPage);
@@ -184,19 +187,19 @@ public class ImageServiceImpl implements ImageService {
     // -------- Helpers --------
 
 
-    private ImageResponse toResponse(Image image,Long totalLikes,boolean likedByUser) {
-        return new ImageResponse(
-                image.getId(),
-                image.getName(),
-              image.getImgUrl(),
-                image.getDescription(),
-                totalLikes,
-                likedByUser,
-                image.getCreatedOn()
-
-
-                );
-    }
+//    private ImageResponse toResponse(Image image,Long totalLikes,boolean likedByUser) {
+//        return new ImageResponse(
+//                image.getId(),
+//                image.getName(),
+//              image.getImgUrl(),
+//                image.getDescription(),
+//                totalLikes,
+//                likedByUser,
+//                image.getCreatedOn()
+//
+//
+//                );
+//    }
 
     private String uploadToCloudinary(MultipartFile file) {
         try {
