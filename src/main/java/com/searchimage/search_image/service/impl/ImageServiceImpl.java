@@ -8,8 +8,8 @@ import com.searchimage.search_image.dto.PageResponse;
 import com.searchimage.search_image.entity.Image;
 import com.searchimage.search_image.entity.Like;
 import com.searchimage.search_image.entity.enums.RecordStatus;
-import com.searchimage.search_image.entity.event.ImageUploadedEvent;
-import com.searchimage.search_image.kafka.producer.ImageEventProducer;
+//import com.searchimage.search_image.entity.event.ImageUploadedEvent;
+//import com.searchimage.search_image.kafka.producer.ImageEventProducer;
 import com.searchimage.search_image.repository.ImageRepository;
 import com.searchimage.search_image.repository.LikeRepository;
 import com.searchimage.search_image.security.UserPrincipal;
@@ -33,17 +33,17 @@ public class ImageServiceImpl implements ImageService {
     private final LikeRepository likeRepository;
 
     private final Cloudinary cloudinary;
-    private final ImageEventProducer eventProducer;
+//    private final ImageEventProducer eventProducer;
 
     public ImageServiceImpl(
             ImageRepository imageRepository,
             Cloudinary cloudinary,
-            ImageEventProducer eventProducer,
+//            ImageEventProducer eventProducer,
             LikeRepository likeRepository
     ) {
         this.imageRepository = imageRepository;
         this.cloudinary = cloudinary;
-        this.eventProducer = eventProducer;
+//        this.eventProducer = eventProducer;
         this.likeRepository=likeRepository;
     }
 
@@ -67,9 +67,9 @@ public class ImageServiceImpl implements ImageService {
 
             imageRepository.save(image);
 
-            eventProducer.publishImageUploaded(
-                    new ImageUploadedEvent(image.getId(), imageUrl)
-            );
+//            eventProducer.publishImageUploaded(
+//                    new ImageUploadedEvent(image.getId(), imageUrl)
+//            );
         }
     }
 
