@@ -14,5 +14,6 @@ public interface ImageProjection {
     Long getTotalLikes();
     Boolean getLikedByMe();
     Boolean getIsFollowing();
+    Boolean getSavedByMe();
 
 }

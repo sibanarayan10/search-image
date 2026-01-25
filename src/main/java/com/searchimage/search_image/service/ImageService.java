@@ -19,7 +19,11 @@ public interface ImageService {
 //    List<ImageResponse> getImages(boolean isUserSpecific, boolean isSaved);
     PageResponse<ImageResponse>  searchImages(String query,
                                              boolean userSpecific,
+                                             boolean likedOnly,boolean savedOnly,
                                              int page,
                                              int size);
+
+//    boolean likeImage(Long imgId);
+    
 }
 

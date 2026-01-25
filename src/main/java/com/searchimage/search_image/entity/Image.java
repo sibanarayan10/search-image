@@ -58,6 +58,20 @@ public class Image extends BaseEntity {
     private AiStatus aiRecordStatus;
 
 
+    @OneToMany(mappedBy = "image", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ImageEngagement> imageEngagements;
+
+
+
+
+    public List<ImageEngagement> getImageEngagements() {
+        return imageEngagements;
+    }
+
+    public void setImageEngagements(List<ImageEngagement> imageEngagements) {
+        this.imageEngagements = imageEngagements;
+    }
+
 
 
     /* ---------- JPA lifecycle ---------- */

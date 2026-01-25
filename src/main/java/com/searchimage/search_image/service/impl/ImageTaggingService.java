@@ -1,10 +1,10 @@
 //package com.searchimage.search_image.service.impl;
-//
+
 //import com.google.cloud.vision.v1.*;
 //import org.springframework.stereotype.Service;
 //import java.util.ArrayList;
 //import java.util.List;
-//
+
 //@Service
 //public class ImageTaggingService {
 //

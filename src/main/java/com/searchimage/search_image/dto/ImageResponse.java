@@ -14,7 +14,7 @@ public class ImageResponse {
     private Instant uploadedOn;
     private Long totalLikes;
     private boolean likedByCurrentUser;
-
+    private boolean savedByCurrentUser;
 
     private boolean isFollowing;
 
@@ -23,6 +23,14 @@ public class ImageResponse {
 
     public ImageResponse() {
 
+    }
+
+    public boolean isSavedByCurrentUser() {
+        return savedByCurrentUser;
+    }
+
+    public void setSavedByCurrentUser(boolean savedByCurrentUser) {
+        this.savedByCurrentUser = savedByCurrentUser;
     }
 
     public ImageResponse(
@@ -34,7 +42,8 @@ public class ImageResponse {
             boolean likedByCurrentUser,
             Instant createdOn,
             String uploadedByUserName,
-            boolean isFollowing
+            boolean isFollowing,
+            boolean savedByCurrentUser
 
 
     ) {
@@ -47,6 +56,7 @@ public class ImageResponse {
         this.likedByCurrentUser = likedByCurrentUser;
         this.uploadedByUserName=uploadedByUserName;
         this.isFollowing=isFollowing;
+        this.savedByCurrentUser=savedByCurrentUser;
     }
 
     public boolean isFollowing() {

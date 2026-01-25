@@ -36,8 +36,18 @@ public class User extends BaseEntity implements Serializable {
     @Column(nullable = false)
     private RecordStatus recordStatus;
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Like> likes;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ImageEngagement> imageEngagements;
+
+    public List<ImageEngagement> getImageEngagements() {
+        return imageEngagements;
+    }
+
+    public void setImageEngagements(List<ImageEngagement> imageEngagements) {
+        this.imageEngagements = imageEngagements;
+    }
+
+
 
     /* ---------- JPA lifecycle callbacks ---------- */
 

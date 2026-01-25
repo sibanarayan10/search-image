@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.searchimage.search_image.dto.ImageResponse;
 import com.searchimage.search_image.dto.ImageUploadRequest;
 import com.searchimage.search_image.dto.PageResponse;
+import com.searchimage.search_image.entity.enums.ImageEngagementType;
+import com.searchimage.search_image.service.ImageEngagementService;
 import com.searchimage.search_image.service.ImageService;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,9 +23,11 @@ import java.util.List;
 public class ImageController {
 
     private final ImageService imageService;
+    private final ImageEngagementService imageEngagementService;
 
-    public ImageController(ImageService imageService) {
+    public ImageController(ImageService imageService,ImageEngagementService imageEngagementService) {
         this.imageService = imageService;
+        this.imageEngagementService=imageEngagementService;
     }
 
     // -------- Upload single image --------
@@ -86,21 +88,29 @@ public class ImageController {
         return ResponseEntity.noContent().build();
     }
 
-//    @GetMapping("images")
-//    public ResponseEntity<List<ImageResponse>> getImages(@RequestParam boolean isUserSpecific, @RequestParam boolean isSaved){
-//            List<ImageResponse>images=imageService.getImages(isUserSpecific,isSaved);
-//            return ResponseEntity.ok(images);
-//    }
-@GetMapping(value = "images", produces = MediaType.APPLICATION_JSON_VALUE)
-public ResponseEntity<PageResponse<ImageResponse>> searchImages(
-            @RequestParam(value = "q",defaultValue = "") String query,
-            @RequestParam("userSpecific") boolean userSpecific,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
-        return ResponseEntity.ok(
-                imageService.searchImages(query,userSpecific, page, size)
-        );
+
+    @GetMapping(value = "images", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<PageResponse<ImageResponse>> searchImages(
+                @RequestParam(value = "q",defaultValue = "") String query,
+                @RequestParam("userSpecific") boolean userSpecific,
+                @RequestParam(value = "likedOnly",defaultValue = "false") boolean likedOnly,
+                @RequestParam(value = "savedOnly",defaultValue = "false") boolean savedOnly,
+                @RequestParam(defaultValue = "0") int page,
+                @RequestParam(defaultValue = "10") int size
+        ) {
+            return ResponseEntity.ok(
+                    imageService.searchImages(query,userSpecific,likedOnly,savedOnly, page, size)
+            );
+        }
+
+
+        /**Image engagement related api*/
+
+    @PostMapping("/images/{imgId}/engagements")
+    public ResponseEntity<Boolean> handleEngagement(@PathVariable Long imgId,
+                                              @RequestParam(value="type") ImageEngagementType type){
+        boolean result= imageEngagementService.applyInteraction(imgId,type);
+        return ResponseEntity.ok(result);
     }
 }
 

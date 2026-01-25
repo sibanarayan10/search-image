@@ -1,7 +1,9 @@
 package com.searchimage.search_image.utility;
 
+import com.searchimage.search_image.security.UserPrincipal;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.time.Instant;
@@ -57,6 +59,12 @@ public class JWTUtility {
             return false;
         }
     }
+    public UserPrincipal getCurrentUser(){
+        return (UserPrincipal) SecurityContextHolder.
+                                getContext().
+                                getAuthentication().
+                                getPrincipal();
+    }
 
     // Internal helpers
     private Jws<Claims> parseToken(String token) {
@@ -65,6 +73,8 @@ public class JWTUtility {
                 .build()
                 .parseClaimsJws(token);
     }
+
+
 
     private Claims getClaims(String token) {
         return parseToken(token).getBody();

@@ -6,12 +6,9 @@ import com.searchimage.search_image.dto.ImageResponse;
 import com.searchimage.search_image.dto.ImageUploadRequest;
 import com.searchimage.search_image.dto.PageResponse;
 import com.searchimage.search_image.entity.Image;
-import com.searchimage.search_image.entity.Like;
-import com.searchimage.search_image.entity.enums.RecordStatus;
 //import com.searchimage.search_image.entity.event.ImageUploadedEvent;
 //import com.searchimage.search_image.kafka.producer.ImageEventProducer;
 import com.searchimage.search_image.repository.ImageRepository;
-import com.searchimage.search_image.repository.LikeRepository;
 import com.searchimage.search_image.security.UserPrincipal;
 import com.searchimage.search_image.service.ImageService;
 import org.springframework.data.domain.*;
@@ -23,28 +20,23 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
 public class ImageServiceImpl implements ImageService {
 
     private final ImageRepository imageRepository;
-    private final LikeRepository likeRepository;
-
     private final Cloudinary cloudinary;
 //    private final ImageEventProducer eventProducer;
 
     public ImageServiceImpl(
             ImageRepository imageRepository,
-            Cloudinary cloudinary,
+            Cloudinary cloudinary
 //            ImageEventProducer eventProducer,
-            LikeRepository likeRepository
     ) {
         this.imageRepository = imageRepository;
         this.cloudinary = cloudinary;
 //        this.eventProducer = eventProducer;
-        this.likeRepository=likeRepository;
     }
 
 
@@ -92,62 +84,11 @@ public class ImageServiceImpl implements ImageService {
     }
 
 
-
-    @Override
-//    public List<ImageResponse> getImages(boolean isUserSpecific,boolean isSaved){
-//        UserPrincipal u=getCurrentUser();
-//        Long userId=u.getUserId();
-//        List<Image>images;
-//        if(isUserSpecific){
-//            images=imageRepository.findByUploadedByAndRecordStatus(userId, RecordStatus.ACTIVE);
-//
-//        }else{
-//            images=imageRepository.findAllByRecordStatus(RecordStatus.ACTIVE);
-//
-//        }
-//        List<Long> imageIds = images.stream()
-//                .map(Image::getId)
-//                .toList();
-//
-//        Map<Long, Long> likeCountMap = new HashMap<>();
-//
-//        for (Object[] row : likeRepository.countLikesByImageIds(imageIds)) {
-//            Long imgId = (Long) row[0];
-//            Long count = (Long) row[1];
-//            likeCountMap.put(imgId, count);
-//        }
-//        List<Like> userLikes =
-//                likeRepository.findByUserIdAndImgIdIn(
-//                        userId,
-//                        imageIds
-//                );
-//        Set<Long> likedImageIds = userLikes.stream()
-//                .map(Like::getImgId)
-//                .collect(Collectors.toSet());
-//        List<ImageResponse> response = new ArrayList<>();
-//
-//        for (Image image : images) {
-//            ImageResponse dto = new ImageResponse();
-//
-//            dto.setImageId(image.getId());
-//            dto.setImageUrl(image.getImgUrl());
-//            dto.setUploadedBy(image.getUser().getName());
-//            dto.setUploadedOn(image.getCreatedOn());
-//            dto.setTotalLikes(
-//                    likeCountMap.getOrDefault(image.getId(), 0L)
-//            );
-//            dto.setLikedByCurrentUser(
-//                    likedImageIds.contains(image.getId())
-//            );
-//
-//            response.add(dto);
-//        }
-//
-//        return response;
-//    }
     public PageResponse<ImageResponse> searchImages(
             String query,
             boolean userSpecific,
+            boolean likedOnly,
+            boolean savedOnly,
             int page,
             int size
     ) {
@@ -156,7 +97,7 @@ public class ImageServiceImpl implements ImageService {
         Long userId=u.getUserId();
         Pageable pageable = PageRequest.of(page, size);
         Page<ImageProjection> images=imageRepository
-                .searchImages(query,userId,userSpecific,pageable);
+                .searchImages(query,userId,userSpecific,likedOnly,savedOnly,pageable);
 
         Page<ImageResponse> dtoPage = images.map(p -> {
             ImageResponse dto = new ImageResponse();
@@ -171,6 +112,7 @@ public class ImageServiceImpl implements ImageService {
             dto.setUploadedBy(p.getUploadedBy());
             dto.setUploadedByUserName(p.getUploadedByUsername());
             dto.setFollowing(p.getIsFollowing());
+            dto.setSavedByCurrentUser(p.getSavedByMe());
             return dto;
         });
         return new PageResponse<ImageResponse>(dtoPage);
