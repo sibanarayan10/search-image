@@ -37,7 +37,10 @@ public class JwtFilter extends OncePerRequestFilter {
 
 
         String token=extractTokenFromCookie(request);
-
+        if (request.getServletPath().startsWith("/api/v1/auth/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
             if (token!=null&&jwtUtil.isTokenValid(token)) {
                 List<GrantedAuthority> authorities =
                         List.of(new SimpleGrantedAuthority("ROLE_USER"));

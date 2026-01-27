@@ -25,17 +25,13 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/")
 public class UserController {
     private final UserService userService;
-    private final UserRepository userRepository;
-    private final ModelMapper modelMapper;
     private final PasswordEncoder passwordEncoder;
     private final JWTUtility jwtUtil;
     private final JwtFilter jwtFilter;
 
     @Autowired
     public UserController(UserService userService,UserRepository userRepository,ModelMapper modelMapper,PasswordEncoder passwordEncoder,JWTUtility jwtUtil,JwtFilter jwtFilter){
-        this.userRepository=userRepository;
         this.userService=userService;
-        this.modelMapper=modelMapper;
         this.passwordEncoder=passwordEncoder;
         this.jwtUtil=jwtUtil;
         this.jwtFilter=jwtFilter;
