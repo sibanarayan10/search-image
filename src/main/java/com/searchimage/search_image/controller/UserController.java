@@ -21,7 +21,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173",allowCredentials = "true")
 @RequestMapping("/api/v1/")
 public class UserController {
     private final UserService userService;
@@ -60,8 +59,8 @@ public class UserController {
         String token = jwtUtil.generateToken(user.getEmail(),user.getId());
         ResponseCookie cookie = ResponseCookie.from("AUTH_TOKEN", token)
                 .httpOnly(true)
-                .secure(false)          // true only in HTTPS
-                .sameSite("Lax")       // REQUIRED for cross-origin XHR
+                .secure(true)          // true only in HTTPS
+                .sameSite("None")       // REQUIRED for cross-origin XHR
                 .path("/")
                 .maxAge(60 * 60)
                 .build();

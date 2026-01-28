@@ -18,8 +18,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
-@CrossOrigin(origins = "http://localhost:5173",
-        allowCredentials = "true")
+
 public class ImageController {
 
     private final ImageService imageService;
