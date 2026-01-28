@@ -59,8 +59,8 @@ public class UserController {
         String token = jwtUtil.generateToken(user.getEmail(),user.getId());
         ResponseCookie cookie = ResponseCookie.from("AUTH_TOKEN", token)
                 .httpOnly(true)
-                .secure(true)          // true only in HTTPS
-                .sameSite("none")       // REQUIRED for cross-origin XHR
+                .secure(false)          // true only in HTTPS
+                .sameSite("lax")       // REQUIRED for cross-origin XHR
                 .path("/")
                 .maxAge(60 * 60)
                 .build();
