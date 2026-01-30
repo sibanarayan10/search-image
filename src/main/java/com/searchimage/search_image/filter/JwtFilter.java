@@ -37,10 +37,6 @@ public class JwtFilter extends OncePerRequestFilter {
 
 
         String token=extractTokenFromCookie(request);
-        if (request.getServletPath().startsWith("/api/v1/auth/")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
             if (token!=null&&jwtUtil.isTokenValid(token)) {
                 List<GrantedAuthority> authorities =
                         List.of(new SimpleGrantedAuthority("ROLE_USER"));
@@ -61,11 +57,6 @@ public class JwtFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext()
                         .setAuthentication(authentication);
 
-                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-                System.out.println("AUTH OBJECT = " + auth);
-                System.out.println("IS AUTHENTICATED = " + auth.isAuthenticated());
-                System.out.println("AUTHORITIES = " + auth.getAuthorities());
-                System.out.println("PRINCIPAL CLASS = " + auth.getPrincipal().getClass());
             }
 
 
