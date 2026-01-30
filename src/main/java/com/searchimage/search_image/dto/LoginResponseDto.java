@@ -5,18 +5,18 @@ import com.searchimage.search_image.entity.User;
 public class LoginResponseDto {
 
     private String message;
-    private User user;
+    private String name;
 
 
-    public LoginResponseDto(String message,User user) {
+    public LoginResponseDto(String message,String name) {
         this.message = message;
-        this.user=user;
+        this.name=name;
     }
 
     public String getMessage() {
         return message;
     }
-    public User getUser() {
-        return user;
+    public String getName() {
+        return name;
     }
 }

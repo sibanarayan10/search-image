@@ -42,21 +42,15 @@ public class UserController {
         return ResponseEntity.status(201).body("User registered successfully");
     }
     @PostMapping("auth/user/sign-in")
-    public ResponseEntity<LoginResponseDto> login(
+    public ResponseEntity<String> login(
             @RequestBody LoginRequestDto request,
             HttpServletResponse response
     ) {
-        User user = userService.findUserByEmail(request.getEmail());
-        boolean passwordMatches = passwordEncoder.matches(
-                request.getPassword(),
-                user.getPassword()
-        );
-        if (!passwordMatches) {
-            return ResponseEntity
-                    .status(401)
-                    .body(new LoginResponseDto("Invalid credentials",user));
+        Long userId=userService.loginUser(request);
+        if(userId<0){
+            throw new RuntimeException("User not found");
         }
-        String token = jwtUtil.generateToken(user.getEmail(),user.getId());
+        String token = jwtUtil.generateToken(request.getEmail(),userId);
         ResponseCookie cookie = ResponseCookie.from("AUTH_TOKEN", token)
                 .httpOnly(true)
                 .secure(true)          // true only in HTTPS
@@ -67,7 +61,7 @@ public class UserController {
 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         return ResponseEntity.ok(
-                new LoginResponseDto("Login successful",user)
+                "Login successful"
         );
     }
 

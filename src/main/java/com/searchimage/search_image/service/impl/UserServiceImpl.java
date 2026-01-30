@@ -1,4 +1,5 @@
 package com.searchimage.search_image.service.impl;
+import com.searchimage.search_image.dto.LoginRequestDto;
 import com.searchimage.search_image.dto.UserDetailResponseDto;
 import com.searchimage.search_image.dto.UserDto;
 import com.searchimage.search_image.entity.User;
@@ -10,6 +11,7 @@ import com.searchimage.search_image.security.UserPrincipal;
 import com.searchimage.search_image.service.UserService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -70,7 +72,6 @@ public class UserServiceImpl implements UserService {
         this.userRepository.save(userEntity);
     }
 
-    @Transactional
     public void registerUser(UserDto user){
         String email=user.getEmail();
         if(userRepository.findByEmail(email).isPresent()){
@@ -81,6 +82,21 @@ public class UserServiceImpl implements UserService {
         userRepository.save(u);
     }
 
+    public Long loginUser(LoginRequestDto request){
+            String email=request.getEmail();
+            Optional<User> user=this.userRepository.findByEmail(email);
+            if(user.isPresent()){
+                User currUser=user.get();
+                String password=currUser.getPassword();
+                String rqPassword= request.getPassword();
+                boolean isMatched= this.passwordEncoder.matches(rqPassword,password);
+                if(isMatched){
+                    return currUser.getId();
+                }
+            }
+
+            return -1L;
+    }
     @Override
     public boolean deleteUser(Long id) {
         User u=findUserById(id);
