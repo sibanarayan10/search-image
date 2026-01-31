@@ -7,6 +7,8 @@ import com.searchimage.search_image.dto.PageResponse;
 import com.searchimage.search_image.entity.enums.ImageEngagementType;
 import com.searchimage.search_image.service.ImageEngagementService;
 import com.searchimage.search_image.service.ImageService;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -111,5 +113,27 @@ public class ImageController {
         boolean result= imageEngagementService.applyInteraction(imgId,type);
         return ResponseEntity.ok(result);
     }
+
+
+    @GetMapping("/images/{id}/download")
+    public ResponseEntity<byte[]> downloadImage(@PathVariable Long id) {
+
+        byte[] imageBytes = imageService.fetchFromCloudinary(id);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.IMAGE_JPEG);
+        headers.setContentDisposition(
+                ContentDisposition
+                        .attachment()
+                        .filename("image-" + id + ".jpg")
+                        .build()
+        );
+
+        return ResponseEntity
+                .ok()
+                .headers(headers)
+                .body(imageBytes);
+    }
+
 }
 

@@ -22,8 +22,7 @@ public interface ImageService {
                                              boolean likedOnly,boolean savedOnly,
                                              int page,
                                              int size);
+    byte[] fetchFromCloudinary(Long imgId);
 
-//    boolean likeImage(Long imgId);
-    
 }
 
