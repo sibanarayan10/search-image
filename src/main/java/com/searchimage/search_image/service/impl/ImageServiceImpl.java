@@ -16,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -116,6 +117,17 @@ public class ImageServiceImpl implements ImageService {
             return dto;
         });
         return new PageResponse<ImageResponse>(dtoPage);
+
+    }
+    public byte[] fetchFromCloudinary(Long imgId) {
+        Optional<Image>img=imageRepository.findById(imgId);
+        if(!img.isPresent()){
+            throw new RuntimeException("Image not found");
+        }
+        Image image=img.get();
+        String cloudinaryUrl=image.getImgUrl();
+        RestTemplate restTemplate = new RestTemplate();
+        return restTemplate.getForObject(cloudinaryUrl, byte[].class);
 
     }
 
