@@ -58,7 +58,8 @@ public class JwtFilter extends OncePerRequestFilter {
                         .setAuthentication(authentication);
 
             }
-
+        System.out.println("Token present: " + (token != null));
+        System.out.println("Token valid: " + jwtUtil.isTokenValid(token));
 
         filterChain.doFilter(request, response);
     }
