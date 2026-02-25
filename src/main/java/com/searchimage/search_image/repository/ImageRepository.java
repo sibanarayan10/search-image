@@ -99,11 +99,11 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
                             
                     WHERE i.record_status = 'ACTIVE'
                             
-                      AND (
-                            :q IS NULL
-                         OR :q = ''
-                         OR i.search_vector @@ plainto_tsquery(:q)
-                      )
+                    AND (
+                        :q IS NULL
+                     OR :q = ''
+                     OR i.search_vector @@ plainto_tsquery('english', :q)
+                    )
                             
                       AND (
                             :userSpecific IS FALSE
@@ -127,9 +127,9 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
                     ORDER BY
                         CASE
                             WHEN :q IS NULL OR :q = '' THEN 0
-                            ELSE ts_rank(i.search_vector, plainto_tsquery(:q))
+                            ELSE ts_rank(i.search_vector, plainto_tsquery('english', :q))
                         END DESC,
-                        i.created_on DESC                                                                          
+                        i.created_on DESC                                                                        
                     """,
 
             countQuery = """
