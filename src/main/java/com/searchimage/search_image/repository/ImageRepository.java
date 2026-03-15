@@ -30,106 +30,55 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
                         i.name,
                         i.img_url,
                         i.description,
-                            
                         i.uploaded_by,
-                        u.name AS uploaded_by_username,
-                            
+                        u.name       AS uploaded_by_username,
                         i.created_on,
-                            
-                        COUNT(ie_like.id) AS total_likes,
-                            
-                        CASE
-                            WHEN SUM(
-                                CASE
-                                    WHEN :userId IS NOT NULL
-                                     AND ie_user.user_id = :userId
-                                     AND ie_user.liked = true
-                                    THEN 1
-                                    ELSE 0
-                                END
-                            ) > 0
-                            THEN true
-                            ELSE false
-                        END AS liked_by_me,
-                            
-                        CASE
-                            WHEN SUM(
-                                CASE
-                                    WHEN :userId IS NOT NULL
-                                     AND ie_user.user_id = :userId
-                                     AND ie_user.saved = true
-                                    THEN 1
-                                    ELSE 0
-                                END
-                            ) > 0
-                            THEN true
-                            ELSE false
-                        END AS saved_by_me,
-                            
-                        CASE
-                            WHEN COUNT(f.id) > 0
-                            THEN true
-                            ELSE false
-                        END AS is_following
-                            
+                        COUNT(DISTINCT ie_like.id)    AS total_likes,
+                        COUNT(DISTINCT i_comment.id)  AS total_comments,
+                        COALESCE(ts_rank(i.search_vector,
+                                 plainto_tsquery('english', :q)), 0)  AS rank,
+                    
+                        CASE WHEN SUM(CASE WHEN ie_user.liked = true  THEN 1 ELSE 0 END) > 0
+                             THEN true ELSE false END AS liked_by_me,
+                    
+                        CASE WHEN SUM(CASE WHEN ie_user.saved = true  THEN 1 ELSE 0 END) > 0
+                             THEN true ELSE false END AS saved_by_me,
+                    
+                        CASE WHEN COUNT(f.id) > 0
+                             THEN true ELSE false END AS is_following
+                    
                     FROM images i
-                            
+                    
                     LEFT JOIN users u
                            ON u.id = i.uploaded_by
-                            
+                    
                     LEFT JOIN follows f
                            ON f.followed_by_id = :userId
-                          AND f.following_id = i.uploaded_by
-                          AND f.is_active = true
-                            
-                    -- All likes (for count)
+                          AND f.following_id   = i.uploaded_by
+                          AND f.is_active       = true
+                    
                     LEFT JOIN image_engagement ie_like
                            ON ie_like.image_id = i.id
-                          AND ie_like.liked = true
-                            
-                    -- Current user engagement
-                    LEFT JOIN image_engagement ie_user
+                          AND ie_like.liked    = true
+                    
+                    LEFT JOIN image_engagement ie_user     
                            ON ie_user.image_id = i.id
-                          AND ie_user.user_id = :userId
-                            
-                    -- Filter join for likedOnly
-                    LEFT JOIN image_engagement ie_filter
-                           ON ie_filter.image_id = i.id
-                          AND ie_filter.user_id = :userId
-                            
+                          AND ie_user.user_id  = :userId
+                    
+                    LEFT JOIN comments i_comment
+                           ON i_comment.commented_on_id = i.id
+                          AND i_comment.is_active       = true
+                    
                     WHERE i.record_status = 'ACTIVE'
-                            
-                    AND (
-                        :q IS NULL
-                     OR :q = ''
-                     OR i.search_vector @@ plainto_tsquery('english', :q)
-                    )
-                            
-                      AND (
-                            :userSpecific IS FALSE
-                         OR i.uploaded_by = :userId
-                      )
-                            
-                      AND (
-                            :likedOnly IS FALSE
-                         OR ie_filter.liked = true
-                      )
-                            
-                      AND (
-                            :savedOnly IS FALSE
-                         OR ie_filter.saved = true
-                      )
-                            
-                    GROUP BY
-                        i.id,
-                        u.name
-                            
-                    ORDER BY
-                        CASE
-                            WHEN :q IS NULL OR :q = '' THEN 0
-                            ELSE ts_rank(i.search_vector, plainto_tsquery('english', :q))
-                        END DESC,
-                        i.created_on DESC                                                                        
+                      AND (:q IS NULL OR :q = ''
+                           OR i.search_vector @@ plainto_tsquery('english', :q))
+                      AND (:userSpecific = false OR i.uploaded_by = :userId)
+                      AND (:likedOnly    = false OR ie_user.liked  = true)
+                      AND (:savedOnly    = false OR ie_user.saved   = true)
+                    
+                    GROUP BY i.id, u.name
+                    
+                    ORDER BY rank DESC, i.created_on DESC                                                                        
                     """,
 
             countQuery = """

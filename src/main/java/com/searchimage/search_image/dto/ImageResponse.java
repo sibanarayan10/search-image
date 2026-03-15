@@ -1,6 +1,5 @@
 package com.searchimage.search_image.dto;
 
-import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 
@@ -13,6 +12,7 @@ public class ImageResponse {
     private Long uploadedBy;
     private Instant uploadedOn;
     private Long totalLikes;
+    private Long totalComments;
     private boolean likedByCurrentUser;
     private boolean savedByCurrentUser;
 
@@ -39,6 +39,7 @@ public class ImageResponse {
             String imgUrl,
             String description,
             Long totalLikes,
+            Long totalComments,
             boolean likedByCurrentUser,
             Instant createdOn,
             String uploadedByUserName,
@@ -53,6 +54,7 @@ public class ImageResponse {
         this.description = description;
         this.uploadedOn = createdOn;
         this.totalLikes = totalLikes;
+        this.totalComments=totalComments;
         this.likedByCurrentUser = likedByCurrentUser;
         this.uploadedByUserName=uploadedByUserName;
         this.isFollowing=isFollowing;
@@ -129,9 +131,12 @@ public class ImageResponse {
     public void setTotalLikes(Long totalLikes) {
         this.totalLikes = totalLikes;
     }
+    public void setTotalComments(Long totalComments) {
+        this.totalComments = totalComments;
+    }
 
-    public void setTotalLikes(long totalLikes) {
-        this.totalLikes = totalLikes;
+    public Long getTotalComments(){
+        return totalComments;
     }
 
     public boolean isLikedByCurrentUser() {
