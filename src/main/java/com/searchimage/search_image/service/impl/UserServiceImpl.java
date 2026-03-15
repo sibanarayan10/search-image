@@ -4,7 +4,7 @@ import com.searchimage.search_image.dto.UserDetailResponseDto;
 import com.searchimage.search_image.dto.UserDto;
 import com.searchimage.search_image.entity.User;
 import com.searchimage.search_image.entity.enums.RecordStatus;
-import com.searchimage.search_image.exception.UserAlreadyExistsException;
+import com.searchimage.search_image.exception.EntityAlreadyExistException;
 import com.searchimage.search_image.repository.FollowRepository;
 import com.searchimage.search_image.repository.UserRepository;
 import com.searchimage.search_image.security.UserPrincipal;
@@ -75,7 +75,7 @@ public class UserServiceImpl implements UserService {
     public void registerUser(UserDto user){
         String email=user.getEmail();
         if(userRepository.findByEmail(email).isPresent()){
-            throw new UserAlreadyExistsException("User already exist");
+            throw new EntityAlreadyExistException("User already exist");
         }
         User u=modelMapper.map(user,User.class);
         u.setPassword(passwordEncoder.encode(user.getPassword()));

@@ -1,16 +1,19 @@
 package com.searchimage.search_image.service.impl;
 
 import com.cloudinary.Cloudinary;
-import com.searchimage.search_image.dto.ImageProjection;
-import com.searchimage.search_image.dto.ImageResponse;
-import com.searchimage.search_image.dto.ImageUploadRequest;
-import com.searchimage.search_image.dto.PageResponse;
+import com.searchimage.search_image.dto.*;
+import com.searchimage.search_image.entity.Comment;
 import com.searchimage.search_image.entity.Image;
 //import com.searchimage.search_image.entity.event.ImageUploadedEvent;
 //import com.searchimage.search_image.kafka.producer.ImageEventProducer;
+import com.searchimage.search_image.entity.User;
+import com.searchimage.search_image.repository.CommentRepository;
 import com.searchimage.search_image.repository.ImageRepository;
+import com.searchimage.search_image.repository.UserRepository;
 import com.searchimage.search_image.security.UserPrincipal;
+import com.searchimage.search_image.service.CommentService;
 import com.searchimage.search_image.service.ImageService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -114,6 +117,7 @@ public class ImageServiceImpl implements ImageService {
             dto.setUploadedByUserName(p.getUploadedByUsername());
             dto.setFollowing(p.getIsFollowing());
             dto.setSavedByCurrentUser(p.getSavedByMe());
+            dto.setTotalComments(p.getTotalComments());
             return dto;
         });
         return new PageResponse<ImageResponse>(dtoPage);
@@ -188,5 +192,7 @@ public class ImageServiceImpl implements ImageService {
                 .substring(imageUrl.lastIndexOf("/") + 1,
                         imageUrl.lastIndexOf("."));
     }
+
+
 }
 
