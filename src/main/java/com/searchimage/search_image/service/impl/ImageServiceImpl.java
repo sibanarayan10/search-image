@@ -63,9 +63,6 @@ public class ImageServiceImpl implements ImageService {
 
             imageRepository.save(image);
 
-//            eventProducer.publishImageUploaded(
-//                    new ImageUploadedEvent(image.getId(), imageUrl)
-//            );
         }
     }
 
