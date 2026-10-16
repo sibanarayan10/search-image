@@ -19,5 +19,8 @@ public class Config {
         return new ModelMapper();
     }
 
-
+    @Bean
+    public com.querydsl.jpa.impl.JPAQueryFactory jpaQueryFactory(jakarta.persistence.EntityManager entityManager) {
+        return new com.querydsl.jpa.impl.JPAQueryFactory(entityManager);
+    }
 }

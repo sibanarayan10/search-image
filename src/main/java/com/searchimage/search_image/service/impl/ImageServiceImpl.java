@@ -1,19 +1,20 @@
 package com.searchimage.search_image.service.impl;
 
 import com.cloudinary.Cloudinary;
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Expression;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.jpa.JPAExpressions;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.searchimage.search_image.dto.*;
-import com.searchimage.search_image.entity.Comment;
-import com.searchimage.search_image.entity.Image;
-//import com.searchimage.search_image.entity.event.ImageUploadedEvent;
-//import com.searchimage.search_image.kafka.producer.ImageEventProducer;
-import com.searchimage.search_image.entity.User;
-import com.searchimage.search_image.repository.CommentRepository;
+import com.searchimage.search_image.entity.*;
+import com.searchimage.search_image.entity.enums.RecordStatus;
+import com.searchimage.search_image.exception.ResourceNotFoundException;
+import com.searchimage.search_image.exception.UnauthorizedException;
 import com.searchimage.search_image.repository.ImageRepository;
-import com.searchimage.search_image.repository.UserRepository;
 import com.searchimage.search_image.security.UserPrincipal;
-import com.searchimage.search_image.service.CommentService;
 import com.searchimage.search_image.service.ImageService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,27 +32,28 @@ public class ImageServiceImpl implements ImageService {
 
     private final ImageRepository imageRepository;
     private final Cloudinary cloudinary;
-//    private final ImageEventProducer eventProducer;
+    private final JPAQueryFactory queryFactory;
 
     public ImageServiceImpl(
             ImageRepository imageRepository,
-            Cloudinary cloudinary
-//            ImageEventProducer eventProducer,
+            Cloudinary cloudinary,
+            JPAQueryFactory queryFactory
     ) {
         this.imageRepository = imageRepository;
         this.cloudinary = cloudinary;
-//        this.eventProducer = eventProducer;
+        this.queryFactory = queryFactory;
     }
-
 
     @Override
     @Transactional
     public void uploadImages(List<ImageUploadRequest> requests) {
+        if (requests == null || requests.isEmpty()) {
+            throw new IllegalArgumentException("No images provided for upload");
+        }
 
         UserPrincipal user = getCurrentUser();
 
         for (ImageUploadRequest req : requests) {
-
             String imageUrl = uploadToCloudinary(req.getFile());
 
             Image image = new Image();
@@ -62,29 +64,27 @@ public class ImageServiceImpl implements ImageService {
             image.setUploadedBy(user.getUserId());
 
             imageRepository.save(image);
-
         }
     }
 
-
     @Override
     public void deleteImage(Long imageId) {
-
         Image image = imageRepository.findById(imageId)
-                .orElseThrow(() -> new RuntimeException("Image not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Image not found with id: " + imageId));
 
         UserPrincipal principal = getCurrentUser();
 
-        // Optional: ownership check
+        // Ownership check
         if (!image.getUploadedBy().equals(principal.getUserId())) {
-            throw new RuntimeException("Unauthorized");
+            throw new UnauthorizedException("You are not authorized to delete this image");
         }
 
         deleteFromCloudinary(image.getImgUrl());
         imageRepository.delete(image);
     }
 
-
+    @Override
+    @Transactional(readOnly = true)
     public PageResponse<ImageResponse> searchImages(
             String query,
             boolean userSpecific,
@@ -93,68 +93,182 @@ public class ImageServiceImpl implements ImageService {
             int page,
             int size
     ) {
+        Optional<UserPrincipal> currentUser = getCurrentUserOpt();
+        Long userId = currentUser.map(UserPrincipal::getUserId).orElse(null);
 
-        UserPrincipal u=getCurrentUser();
-        Long userId=u.getUserId();
         Pageable pageable = PageRequest.of(page, size);
-        Page<ImageProjection> images=imageRepository
-                .searchImages(query,userId,userSpecific,likedOnly,savedOnly,pageable);
 
-        Page<ImageResponse> dtoPage = images.map(p -> {
-            ImageResponse dto = new ImageResponse();
-            dto.setImageId(p.getId());
-            dto.setName(p.getName());
-            dto.setImageUrl(p.getImgUrl());
-            dto.setDescription(p.getDescription());
-            dto.setUploadedBy(p.getUploadedBy());
-            dto.setUploadedOn(p.getCreatedOn());
-            dto.setTotalLikes(p.getTotalLikes());
-            dto.setLikedByCurrentUser(p.getLikedByMe());
-            dto.setUploadedBy(p.getUploadedBy());
-            dto.setUploadedByUserName(p.getUploadedByUsername());
-            dto.setFollowing(p.getIsFollowing());
-            dto.setSavedByCurrentUser(p.getSavedByMe());
-            dto.setTotalComments(p.getTotalComments());
-            return dto;
-        });
-        return new PageResponse<ImageResponse>(dtoPage);
-
-    }
-    public byte[] fetchFromCloudinary(Long imgId) {
-        Optional<Image>img=imageRepository.findById(imgId);
-        if(!img.isPresent()){
-            throw new RuntimeException("Image not found");
+        // If user is unauthenticated and requests user-scoped data, safely return an empty page
+        if (userId == null && (userSpecific || likedOnly || savedOnly)) {
+            return new PageResponse<>(new PageImpl<>(Collections.emptyList(), pageable, 0));
         }
-        Image image=img.get();
-        String cloudinaryUrl=image.getImgUrl();
+
+        QImage image = QImage.image;
+        QUser uploader = new QUser("uploader");
+        QImageEngagement engagementLike = new QImageEngagement("engagementLike");
+        QComment comment = new QComment("comment");
+        QImageEngagement userEngagement = new QImageEngagement("userEngagement");
+        QFollow follow = new QFollow("follow");
+
+        // Subquery for total likes
+        Expression<Long> totalLikesExpr = JPAExpressions
+                .select(engagementLike.count())
+                .from(engagementLike)
+                .where(engagementLike.image.id.eq(image.id).and(engagementLike.liked.isTrue()));
+
+        // Subquery for total comments
+        Expression<Long> totalCommentsExpr = JPAExpressions
+                .select(comment.count())
+                .from(comment)
+                .where(comment.commentedOnId.eq(image.id).and(comment.isActive.isTrue()));
+
+        // Expressions for current user interactions (evaluated only when authenticated)
+        Expression<Boolean> likedByMeExpr = (userId != null)
+                ? JPAExpressions
+                .selectOne()
+                .from(userEngagement)
+                .where(userEngagement.image.id.eq(image.id)
+                        .and(userEngagement.user.id.eq(userId))
+                        .and(userEngagement.liked.isTrue()))
+                .exists()
+                : Expressions.asBoolean(false);
+
+        Expression<Boolean> savedByMeExpr = (userId != null)
+                ? JPAExpressions
+                .selectOne()
+                .from(userEngagement)
+                .where(userEngagement.image.id.eq(image.id)
+                        .and(userEngagement.user.id.eq(userId))
+                        .and(userEngagement.saved.isTrue()))
+                .exists()
+                : Expressions.asBoolean(false);
+
+        Expression<Boolean> isFollowingExpr = (userId != null)
+                ? JPAExpressions
+                .selectOne()
+                .from(follow)
+                .where(follow.followedBy.id.eq(userId)
+                        .and(follow.following.id.eq(image.uploadedBy))
+                        .and(follow.isActive.isTrue()))
+                .exists()
+                : Expressions.asBoolean(false);
+
+        // Build dynamic WHERE clause
+        BooleanBuilder builder = new BooleanBuilder();
+        builder.and(image.recordStatus.eq(RecordStatus.ACTIVE));
+
+        if (query != null && !query.trim().isEmpty()) {
+            String q = query.trim();
+            builder.and(
+                    image.name.containsIgnoreCase(q)
+                            .or(image.description.containsIgnoreCase(q))
+                            .or(image.tags.any().containsIgnoreCase(q))
+            );
+        }
+
+        if (userSpecific && userId != null) {
+            builder.and(image.uploadedBy.eq(userId));
+        }
+
+        if (likedOnly && userId != null) {
+            builder.and(
+                    JPAExpressions
+                            .selectOne()
+                            .from(userEngagement)
+                            .where(userEngagement.image.id.eq(image.id)
+                                    .and(userEngagement.user.id.eq(userId))
+                                    .and(userEngagement.liked.isTrue()))
+                            .exists()
+            );
+        }
+
+        if (savedOnly && userId != null) {
+            builder.and(
+                    JPAExpressions
+                            .selectOne()
+                            .from(userEngagement)
+                            .where(userEngagement.image.id.eq(image.id)
+                                    .and(userEngagement.user.id.eq(userId))
+                                    .and(userEngagement.saved.isTrue()))
+                            .exists()
+            );
+        }
+
+        Long totalCount = queryFactory
+                .select(image.count())
+                .from(image)
+                .where(builder)
+                .fetchOne();
+
+        long total = totalCount != null ? totalCount : 0L;
+        if (total == 0) {
+            return new PageResponse<>(new PageImpl<>(Collections.emptyList(), pageable, 0));
+        }
+
+        List<Tuple> results = queryFactory
+                .select(
+                        image.id,
+                        image.name,
+                        image.imgUrl,
+                        image.description,
+                        image.uploadedBy,
+                        uploader.name,
+                        image.createdOn,
+                        totalLikesExpr,
+                        totalCommentsExpr,
+                        likedByMeExpr,
+                        savedByMeExpr,
+                        isFollowingExpr
+                )
+                .from(image)
+                .leftJoin(image.user, uploader)
+                .where(builder)
+                .orderBy(image.createdOn.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        List<ImageResponse> content = results.stream().map(tuple -> {
+            ImageResponse dto = new ImageResponse();
+            dto.setImageId(tuple.get(image.id));
+            dto.setName(tuple.get(image.name));
+            dto.setImageUrl(tuple.get(image.imgUrl));
+            dto.setDescription(tuple.get(image.description));
+            dto.setUploadedBy(tuple.get(image.uploadedBy));
+            dto.setUploadedByUserName(tuple.get(uploader.name));
+            dto.setUploadedOn(tuple.get(image.createdOn));
+
+            Long likes = tuple.get(totalLikesExpr);
+            dto.setTotalLikes(likes != null ? likes : 0L);
+
+            Long comments = tuple.get(totalCommentsExpr);
+            dto.setTotalComments(comments != null ? comments : 0L);
+
+            Boolean liked = tuple.get(likedByMeExpr);
+            dto.setLikedByCurrentUser(Boolean.TRUE.equals(liked));
+
+            Boolean saved = tuple.get(savedByMeExpr);
+            dto.setSavedByCurrentUser(Boolean.TRUE.equals(saved));
+
+            Boolean following = tuple.get(isFollowingExpr);
+            dto.setFollowing(Boolean.TRUE.equals(following));
+
+            return dto;
+        }).toList();
+
+        return new PageResponse<>(new PageImpl<>(content, pageable, total));
+    }
+
+    @Override
+    public byte[] fetchFromCloudinary(Long imgId) {
+        Image image = imageRepository.findById(imgId)
+                .orElseThrow(() -> new ResourceNotFoundException("Image not found with id: " + imgId));
+        String cloudinaryUrl = image.getImgUrl();
         RestTemplate restTemplate = new RestTemplate();
         return restTemplate.getForObject(cloudinaryUrl, byte[].class);
-
     }
 
-
-
-
-
-
-
-
     // -------- Helpers --------
-
-
-//    private ImageResponse toResponse(Image image,Long totalLikes,boolean likedByUser) {
-//        return new ImageResponse(
-//                image.getId(),
-//                image.getName(),
-//              image.getImgUrl(),
-//                image.getDescription(),
-//                totalLikes,
-//                likedByUser,
-//                image.getCreatedOn()
-//
-//
-//                );
-//    }
 
     private String uploadToCloudinary(MultipartFile file) {
         try {
@@ -162,7 +276,7 @@ public class ImageServiceImpl implements ImageService {
                     .upload(file.getBytes(), Map.of());
             return result.get("secure_url").toString();
         } catch (IOException e) {
-            throw new RuntimeException("Cloudinary upload failed");
+            throw new RuntimeException("Cloudinary upload failed", e);
         }
     }
 
@@ -171,25 +285,29 @@ public class ImageServiceImpl implements ImageService {
             String publicId = extractPublicId(imageUrl);
             cloudinary.uploader().destroy(publicId, Map.of());
         } catch (Exception e) {
-            throw new RuntimeException("Cloudinary delete failed");
+            throw new RuntimeException("Cloudinary delete failed", e);
         }
     }
 
-    private UserPrincipal getCurrentUser() {
+    private Optional<UserPrincipal> getCurrentUserOpt() {
         Authentication auth = SecurityContextHolder
                 .getContext()
                 .getAuthentication();
 
-        return (UserPrincipal) auth.getPrincipal();
+        if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof UserPrincipal principal) {
+            return Optional.of(principal);
+        }
+        return Optional.empty();
+    }
+
+    private UserPrincipal getCurrentUser() {
+        return getCurrentUserOpt()
+                .orElseThrow(() -> new UnauthorizedException("User is not authenticated"));
     }
 
     private String extractPublicId(String imageUrl) {
-        // Example: extract between last '/' and '.'
         return imageUrl
                 .substring(imageUrl.lastIndexOf("/") + 1,
                         imageUrl.lastIndexOf("."));
     }
-
-
 }
-

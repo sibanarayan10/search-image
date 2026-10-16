@@ -12,19 +12,24 @@ import com.searchimage.search_image.repository.ImageRepository;
 import com.searchimage.search_image.repository.UserRepository;
 import com.searchimage.search_image.service.CommentService;
 import com.searchimage.search_image.utility.JWTUtility;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
 
     private final CommentRepository  commentRepository;
     private final UserRepository     userRepository;
     private final ImageRepository imageRepository;
     private final JWTUtility utils;
+
+    public CommentServiceImpl(CommentRepository commentRepository, UserRepository userRepository, ImageRepository imageRepository, JWTUtility utils) {
+        this.commentRepository = commentRepository;
+        this.userRepository = userRepository;
+        this.imageRepository = imageRepository;
+        this.utils = utils;
+    }
 
     @Override
     public CommentResponse createComment(String comment,Long imageId) {

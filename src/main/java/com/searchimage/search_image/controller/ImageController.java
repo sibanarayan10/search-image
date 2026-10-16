@@ -92,15 +92,15 @@ public class ImageController {
 
     @GetMapping(value = "images", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<PageResponse<ImageResponse>> searchImages(
-                @RequestParam(value = "q",defaultValue = "") String query,
-                @RequestParam("userSpecific") boolean userSpecific,
-                @RequestParam(value = "likedOnly",defaultValue = "false") boolean likedOnly,
-                @RequestParam(value = "savedOnly",defaultValue = "false") boolean savedOnly,
+                @RequestParam(value = "q", defaultValue = "") String query,
+                @RequestParam(value = "userSpecific", defaultValue = "false") boolean userSpecific,
+                @RequestParam(value = "likedOnly", defaultValue = "false") boolean likedOnly,
+                @RequestParam(value = "savedOnly", defaultValue = "false") boolean savedOnly,
                 @RequestParam(defaultValue = "0") int page,
                 @RequestParam(defaultValue = "10") int size
         ) {
             return ResponseEntity.ok(
-                    imageService.searchImages(query,userSpecific,likedOnly,savedOnly, page, size)
+                    imageService.searchImages(query, userSpecific, likedOnly, savedOnly, page, size)
             );
         }
 

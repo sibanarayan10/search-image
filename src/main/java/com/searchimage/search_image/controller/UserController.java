@@ -1,7 +1,6 @@
 package com.searchimage.search_image.controller;
 
 import com.searchimage.search_image.dto.LoginRequestDto;
-import com.searchimage.search_image.dto.LoginResponseDto;
 import com.searchimage.search_image.dto.UserDetailResponseDto;
 import com.searchimage.search_image.dto.UserDto;
 import com.searchimage.search_image.entity.User;
